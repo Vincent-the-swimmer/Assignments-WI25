@@ -65,6 +65,7 @@ def parse_maze_to_graph(maze):
     # 3) Identify start_node (if (0,0) is open) and goal_node (if (rows-1, cols-1) is open)
 
     # TODO: Implement the logic to build nodes and link neighbors
+
     nodes_dict = []
     for i in rows:
         for j in cols:
@@ -95,7 +96,7 @@ def parse_maze_to_graph(maze):
 #                         BFS (Graph-based)                                    #
 ###############################################################################
 
-def bfs(start_node, goal_node):
+def bfs(start_node: Node, goal_node: Node):
     """
     Breadth-first search on an undirected graph of Node objects.
     Returns a list of (row, col) from start to goal, or None if no path.
@@ -105,6 +106,17 @@ def bfs(start_node, goal_node):
       2. Track visited nodes so you don’t revisit.
       3. Also track parent_map to reconstruct the path once goal_node is reached.
     """
+    visited = []
+    queue = [start_node]
+    while queue:
+        node = queue.pop(0)
+        if node.value == 0:
+            visited.append(node)
+        if node == goal_node:
+            break
+        for neighbor in sorted(node.neighbors, key=lambda x: x.value):
+            if neighbor not in visited and neighbor.value == 0:
+                queue.append(neighbor)
     
     # TODO: Implement BFS
     return None
