@@ -66,9 +66,8 @@ def parse_maze_to_graph(maze):
 
     # TODO: Implement the logic to build nodes and link neighbors
 
-    nodes_dict = []
-    for i in rows:
-        for j in cols:
+    for i in range(rows):
+        for j in range(cols):
             temp = Node(maze[i][j])
             if i+1 < rows-1:
                 Node.add_neighbor(temp, Node(maze[i+1][j]))
@@ -107,19 +106,25 @@ def bfs(start_node: Node, goal_node: Node):
       3. Also track parent_map to reconstruct the path once goal_node is reached.
     """
     visited = []
+    parent_map = []
     queue = [start_node]
     while queue:
         node = queue.pop(0)
-        if node.value == 0:
-            visited.append(node)
+        visited.append(node)
         if node == goal_node:
             break
         for neighbor in sorted(node.neighbors, key=lambda x: x.value):
             if neighbor not in visited and neighbor.value == 0:
                 queue.append(neighbor)
+                parent_map[neighbor] = node
+    temp = parent_map[goal_node]
+    path = deque([temp])
+    while parent_map[temp]:
+        path.appendleft(parent_map[temp])
+        temp = parent_map[temp]
     
     # TODO: Implement BFS
-    return None
+    return path
 
 
 ###############################################################################
