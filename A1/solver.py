@@ -26,6 +26,13 @@ class Node:
          - self includes node in self.neighbors
          - node includes self in node.neighbors (undirected)
         """
+        if isinstance(self, Node):
+            self.neighbors.append(node)
+
+        if isinstance(node, Node):
+            node.neighbors.append(self)
+
+        
         # TODO: Implement adding a neighbor in an undirected manner
         pass
 
@@ -58,7 +65,17 @@ def parse_maze_to_graph(maze):
     # 3) Identify start_node (if (0,0) is open) and goal_node (if (rows-1, cols-1) is open)
 
     # TODO: Implement the logic to build nodes and link neighbors
-
+    for i in rows:
+        for j in cols:
+            start = Node(maze[i][j])
+            if i+1 < rows-1:
+                Node.add_neighbor(start, Node(maze[i+1][j]))
+            if i-1 >= 0:
+                Node.add_neighbor(start, Node(maze[i-1][j]))
+            if j+1 < cols-1:
+                Node.add_neighbor(start, Node(maze[i][j+1]))
+            if j-1 >= 0:
+                Node.add_neighbor(start, Node(maze[i][j-1]))
     start_node = None
     goal_node = None
 
