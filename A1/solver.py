@@ -209,10 +209,10 @@ def astar(start_node, goal_node):
         if node == goal_node:
             break
         for neighbor in node.neighbors:
-            maybe_g_cost = g_score[node] + 1
-            if neighbor not in g_score or maybe_g_cost < g_score[neighbor]:
-                g_score[neighbor] = maybe_g_cost
-                f_cost = maybe_g_cost + manhattan_distance(neighbor, goal_node)
+            maybe_g_score = g_score[node] + 1
+            if neighbor not in g_score or maybe_g_score < g_score[neighbor]:
+                g_score[neighbor] = maybe_g_score
+                f_cost = maybe_g_score + manhattan_distance(neighbor, goal_node)
                 heapq.heappush(queue, (f_cost, neighbor))
                 parent_map[neighbor] = node
     if node != goal_node:
