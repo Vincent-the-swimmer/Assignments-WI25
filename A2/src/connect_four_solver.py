@@ -15,7 +15,8 @@ def create_board():
         A 2D numpy array of shape (ROW_COUNT, COLUMN_COUNT) filled with zeros (float).
     """
     # TODO: implement
-    pass
+    board =  [[0 for i in range(ROW_COUNT)] for j in range(COLUMN_COUNT)]
+    return board
 
 
 def drop_piece(board, row, col, piece):
@@ -32,8 +33,8 @@ def drop_piece(board, row, col, piece):
     None. The 'board' is modified in-place. Do NOT return a new board!
     """
     # TODO: implement
-    pass
-
+    #if is_valid_location:
+    board[row][col] = piece
 
 def is_valid_location(board, col):
     """
@@ -47,7 +48,9 @@ def is_valid_location(board, col):
     bool: True if it's valid to drop a piece in this column, False otherwise.
     """
     # TODO: implement
-    pass
+    if board[0][col] == 0:
+        return True
+    return False
 
 
 def get_next_open_row(board, col):
@@ -62,8 +65,15 @@ def get_next_open_row(board, col):
     int: The row index of the lowest empty cell in this column.
     """
     # TODO: implement
-    pass
-
+    empty_row = -1
+    for i in range(ROW_COUNT):
+        if board[i][col] == 1 or board[i][col] == 2:
+            empty_row = i
+            break
+    if empty_row == -1:
+        return 0
+    else:
+        return empty_row - 1
 
 def winning_move(board, piece):
     """
@@ -78,7 +88,12 @@ def winning_move(board, piece):
     This requires checking horizontally, vertically, and diagonally.
     """
     # TODO: implement
-    pass
+
+def winning_horizontally(board, place: tuple):
+    row,col = place
+    for i in range(COLUMN_COUNT):
+        
+                                                                         
 
 
 def get_valid_locations(board):
