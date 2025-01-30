@@ -89,9 +89,26 @@ def winning_move(board, piece):
     """
     # TODO: implement
 
-def winning_horizontally(board, place: tuple):
+def winning_horizontally(board, place: tuple, piece):
     row,col = place
-    for i in range(COLUMN_COUNT):
+    counter = 0
+    while col < COLUMN_COUNT:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        col += 1
+
+    while col >= 0:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        col -= 1
         
                                                                          
 
