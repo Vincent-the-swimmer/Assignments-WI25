@@ -15,7 +15,7 @@ def create_board():
         A 2D numpy array of shape (ROW_COUNT, COLUMN_COUNT) filled with zeros (float).
     """
     # TODO: implement
-    board =  [[0 for i in range(ROW_COUNT)] for j in range(COLUMN_COUNT)]
+    board =  np.zeros((ROW_COUNT, COLUMN_COUNT), float)
     return board
 
 
@@ -88,6 +88,17 @@ def winning_move(board, piece):
     This requires checking horizontally, vertically, and diagonally.
     """
     # TODO: implement
+    row, col = ROW_COUNT-1, COLUMN_COUNT-1
+    for i in range(row-1):
+        for j in range(col-1):
+            if board[row][col] == piece:
+                if winning_diagonally(board, (i,j), piece):
+                    return True
+                if winning_horizontally(board, (i,j), piece):
+                    return True
+                if winning_vertically(board, (i,j), piece):
+                    return True
+    return False
 
 def winning_horizontally(board, place: tuple, piece):
     row,col = place
@@ -101,6 +112,7 @@ def winning_horizontally(board, place: tuple, piece):
             return True
         col += 1
 
+    row,col = place
     while col >= 0:
         if board[row][col] == piece:
             counter += 1
@@ -109,8 +121,77 @@ def winning_horizontally(board, place: tuple, piece):
         if counter == 4:
             return True
         col -= 1
-        
-                                                                         
+    return False
+
+def winning_vertically(board, place: tuple, piece):
+    row,col = place
+    counter = 0
+    while row < ROW_COUNT:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row += 1
+
+    row,col = place
+    while row >= 0:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row -= 1
+    return False
+
+def winning_diagonally(board, place: tuple, piece):
+    row,col = place
+    counter = 0
+    while row < ROW_COUNT and col < COLUMN_COUNT:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row += 1
+        col += 1
+    
+    row,col = place
+    while row >= 0 and col >= 0:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row -= 1
+        col -= 1
+    
+    row,col = place
+    while row < ROW_COUNT and col >= 0:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row += 1
+        col -= 1
+    
+    row,col = place
+    while row >= 0 and col < COLUMN_COUNT:
+        if board[row][col] == piece:
+            counter += 1
+        else:
+            counter = 0
+        if counter == 4:
+            return True
+        row -= 1
+        col += 1
+    return False                                       
 
 
 def get_valid_locations(board):
@@ -124,7 +205,11 @@ def get_valid_locations(board):
     list of int: The list of column indices that are not full.
     """
     # TODO: implement
-    pass
+    not_full = []
+    for i in range(COLUMN_COUNT):
+        if board[0][i] == 0:
+            not_full.append(i)
+    return not_full
 
 
 def is_terminal_node(board):
@@ -140,7 +225,16 @@ def is_terminal_node(board):
     bool: True if the game is over, False otherwise.
     """
     # TODO: implement
-    pass
+    if winning_move(board, 1):
+        return True
+
+    if winning_move(board, 2):
+        return True
+    
+    if get_valid_locations(board) == []:
+        return True
+
+    return False
 
 
 def score_position(board, piece):
@@ -184,7 +278,7 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
           score: The heuristic score of the board state.
     """
     # TODO: implement
-    pass
+    
 
 
 if __name__ == "__main__":
