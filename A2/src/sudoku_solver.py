@@ -40,7 +40,11 @@ def find_empty_cell(board):
         - If there are no empty cells, returns None.
     """
     # TODO: implement
-    pass
+    for i in range(len(board)):
+        for j in range(len(board[0])):
+            if board[i][j] == 0:
+                return (i,j)
+    return None
 
 
 def is_valid(board, row, col, num):
@@ -60,9 +64,49 @@ def is_valid(board, row, col, num):
     bool: True if valid, False otherwise.
     """
     # TODO: implement
-    pass
+    board[row][col] = num
+    if solved_horizontally(board, row) and solved_vertically(board, col) and solved_box(board, row, col):
+        board[row][col] = 0
+        return True
+    board[row][col] = num
+    return False
+
+def solved_horizontally(board, row):
+    num_in_row = []
+    for i in range(len(board)):
+        if board[row][i] in num_in_row:
+            return False
+        if board[row][i] != 0:
+            num_in_row.append(board[row][i])
+    return True
 
 
+def solved_vertically(board, col):
+    num_in_col = []
+    for i in range(len(board[0])):
+        if board[i][col] in num_in_col:
+            return False
+        if board[i][col] != 0:
+            num_in_col.append(board[i][col])
+    return True
+
+def solved_box(board, row, col):
+    curr_row = row
+    curr_col = col
+    num_in_box = []
+    while curr_row % 3 != 0:
+        curr_row -= 1
+    while curr_col % 3 != 0:
+        curr_col -= 1
+    limit = curr_col + 3
+    for curr_row in range(limit):
+        for curr_col in range(limit):
+            if board[curr_row][curr_col] in num_in_box:
+                return False
+            if board[curr_row][curr_col] != 0:
+                num_in_box.append(board[curr_row][curr_col])
+    return True 
+    
 def solve_sudoku(board):
     """
     Solves the Sudoku puzzle in 'board' using backtracking.
@@ -76,7 +120,16 @@ def solve_sudoku(board):
         - False if the puzzle is unsolvable.
     """
     # TODO: implement
-    pass
+    if find_empty_cell(board):
+        return True
+    
+    for row in range(len(board)):
+        for col in range(len(board[0])):
+            for num in range(1,10):
+                if is_valid(board, row, col, num):
+                    if solve_sudoku(board):
+                        return True 
+    return False
 
 
 def is_solved_correctly(board):
@@ -93,7 +146,10 @@ def is_solved_correctly(board):
     bool: True if the board is correctly solved, False otherwise.
     """
     # TODO: implement
-    pass
+    for row in range(len(board)):
+        if not solved_horizontally(board, row):
+            return False
+    return True
 
 
 if __name__ == "__main__":

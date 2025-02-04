@@ -88,10 +88,10 @@ def winning_move(board, piece):
     This requires checking horizontally, vertically, and diagonally.
     """
     # TODO: implement
-    row, col = ROW_COUNT-1, COLUMN_COUNT-1
-    for i in range(row-1):
-        for j in range(col-1):
-            if board[row][col] == piece:
+
+    for i in range(ROW_COUNT):
+        for j in range(COLUMN_COUNT):
+            if board[i][j] == piece:
                 if winning_diagonally(board, (i,j), piece):
                     return True
                 if winning_horizontally(board, (i,j), piece):
@@ -278,7 +278,31 @@ def minimax(board, depth, alpha, beta, maximizingPlayer):
           score: The heuristic score of the board state.
     """
     # TODO: implement
+    if depth == 0 and maximizingPlayer == True:
+        return (None, score_position(board, 1))
+    if depth == 0 and maximizingPlayer == False:
+        return (None, score_position(board, 2))
     
+    if maximizingPlayer == True:
+        for curr_col in range(COLUMN_COUNT):
+            max_eval = 999999999999
+            if is_valid_location(board, curr_col):
+                eval = minimax(board, depth-1, alpha, beta, False)
+                max_eval = max(eval[1], max_eval)
+                alpha = max(alpha, eval[1])
+                if beta <= alpha:
+                    break
+                return (curr_col, score_position(board, 1))
+    else:
+        for curr_col in range(COLUMN_COUNT):
+            min_eval = -999999999999
+            if is_valid_location(board, curr_col):
+                eval = minimax(board, depth-1, alpha, beta, True)
+                min_eval = min(eval[1], min_eval)
+                beta = min(beta, eval[1])
+                if beta <= alpha:
+                    break
+                return (curr_col, score_position(board, 2))
 
 
 if __name__ == "__main__":
