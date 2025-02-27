@@ -62,7 +62,41 @@ class DynamicProgramming:
             None
         """
         # TODO: Implement policy evaluation using iterative updates
-        pass
+        # delta = 0
+        # while delta < self.theta:
+        #     delta = 0
+        #     for state in self.all_states:
+        #         curr_reward = 0
+        #         value = self.value_function[state]
+        #         # sum_action = sum(self.policy[state].values())
+        #         sum_action = self.policy[state]
+        #         transition_prob = 1
+        #         action = self.policy[state]
+        #         reward, new_state = self._simulate_action(state, action)
+        #         if curr_reward < reward:
+        #             curr_reward = reward
+        #             best_state = new_state
+        #         else:
+        #             best_state = state
+        #         best_state_value = self.value_function[best_state]
+        #         self.value_function[state] = sum_action*transition_prob*curr_reward+self.gamma*best_state_value
+        #         delta = max(delta, value - self.value_function[state])
+        while True:
+            delta = 0
+            for state in self.all_states:
+                value = self.value_function[state]
+                new_value = 0
+                
+                action = self.policy[state]  # ✅ Get the single action for this state
+                reward, new_state = self._simulate_action(state, action)
+                new_value = reward + self.gamma * self.value_function[new_state]  # Update value function
+
+                # Update value function
+                self.value_function[state] = new_value
+                delta = max(delta, abs(value - new_value))  # Check change for convergence
+
+            if delta < self.theta:
+                break  # Converged!
     
     def policy_improvement(self):
         """
@@ -72,7 +106,50 @@ class DynamicProgramming:
             bool: True if the policy is stable (no changes), False otherwise.
         """
         # TODO: Implement policy improvement by choosing the best action
-        pass
+        # policy_stable = True
+        # for state in self.all_states:
+        #     curr_action = self.policy[state]
+        #     curr_reward = 0
+        #     curr_q_value = 0
+        #     value = self.value_function[state]
+        #     # sum_action = sum(self.policy[state].values())
+        #     sum_action = self.policy[state]
+        #     transition_prob = 1
+        #     action = self.policy[state]
+        #     reward, new_state = self._simulate_action(state, action)
+        #     new_state_value = self.value_function[new_state]
+        #     q_value = sum_action*transition_prob*curr_reward+self.gamma*new_state_value
+        #     if curr_q_value < q_value:
+        #         curr_q_value = q_value
+        #         best_action = action
+        #     self.policy[state] = best_action
+        #     if curr_action != best_action:
+        #         policy_stable = False
+        # return policy_stable
+        policy_stable = True
+
+        for state in self.all_states:
+            old_action = self.policy[state]  # ✅ No need to use max() or .get()
+            best_action = None
+            best_q_value = float('-inf')
+
+            # Evaluate all actions
+            for action in self.env.n_actions:
+                reward, new_state = self._simulate_action(state, action)
+                q_value = reward + self.gamma * self.value_function[new_state]
+
+                if q_value > best_q_value:
+                    best_q_value = q_value
+                    best_action = action
+
+            # Update policy: Make the best action deterministic (1 probability)
+            self.policy[state] = {a: 1.0 if a == best_action else 0.0 for a in range(self.env.n_actions)}
+
+            # If action changed, policy is not stable yet
+            if old_action != best_action:
+                policy_stable = False
+
+        return policy_stable
     
     def policy_iteration(self):
         """
@@ -85,7 +162,11 @@ class DynamicProgramming:
             None
         """
         # TODO: Implement Policy Iteration
-        pass
+        policy_stable = False
+        while not policy_stable: 
+            self.policy_evaluation()
+            policy_stable = self.policy_improvement()
+
     
     def value_iteration(self):
         """
