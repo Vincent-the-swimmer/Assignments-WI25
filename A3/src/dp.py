@@ -86,13 +86,19 @@ class DynamicProgramming:
             for state in self.all_states:
                 value = self.value_function[state]
                 new_value = 0
-                
-                action = self.policy[state]  # ✅ Get the single action for this state
-                reward, new_state = self._simulate_action(state, action)
-                new_value = reward + self.gamma * self.value_function[new_state]  # Update value function
+                best_q_value = float('-inf')
+                for action in range(self.env.n_actions):
+                    reward, new_state = self._simulate_action(state, action)
+                    q_value = reward + self.gamma * self.value_function[new_state]
+
+                    if q_value > best_q_value:
+                        best_q_value = q_value
+                        best_state = new_state
+                        best_reward = reward
+                best_value = best_reward + self.gamma * self.value_function[best_state]  # Update value function
 
                 # Update value function
-                self.value_function[state] = new_value
+                self.value_function[state] = best_value
                 delta = max(delta, abs(value - new_value))  # Check change for convergence
 
             if delta < self.theta:
@@ -134,7 +140,7 @@ class DynamicProgramming:
             best_q_value = float('-inf')
 
             # Evaluate all actions
-            for action in self.env.n_actions:
+            for action in range(self.env.n_actions):
                 reward, new_state = self._simulate_action(state, action)
                 q_value = reward + self.gamma * self.value_function[new_state]
 
@@ -143,7 +149,7 @@ class DynamicProgramming:
                     best_action = action
 
             # Update policy: Make the best action deterministic (1 probability)
-            self.policy[state] = {a: 1.0 if a == best_action else 0.0 for a in range(self.env.n_actions)}
+            self.policy[state] = best_action
 
             # If action changed, policy is not stable yet
             if old_action != best_action:
@@ -163,6 +169,7 @@ class DynamicProgramming:
         """
         # TODO: Implement Policy Iteration
         policy_stable = False
+        print(self.policy)
         while not policy_stable: 
             self.policy_evaluation()
             policy_stable = self.policy_improvement()
