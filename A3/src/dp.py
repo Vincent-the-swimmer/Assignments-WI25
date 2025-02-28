@@ -99,7 +99,7 @@ class DynamicProgramming:
 
                 # Update value function
                 self.value_function[state] = best_value
-                delta = max(delta, abs(value - new_value))  # Check change for convergence
+                delta = max(delta, abs(value - best_value))  # Check change for convergence
 
             if delta < self.theta:
                 break  # Converged!
@@ -185,7 +185,41 @@ class DynamicProgramming:
             None
         """
         # TODO: Implement Value Iteration
-        pass
+        while True:
+            delta = 0
+            for state in self.all_states:
+                value = self.value_function[state]
+                new_value = 0
+                best_q_value = float('-inf')
+                for action in range(self.env.n_actions):
+                    reward, new_state = self._simulate_action(state, action)
+                    q_value = reward + self.gamma * self.value_function[new_state]
+                    best_q_value = max(q_value, best_q_value)
+
+                # Update value function
+                self.value_function[state] = best_q_value
+                delta = max(delta, abs(value - best_q_value))  # Check change for convergence
+
+            if delta < self.theta:
+                break  # Converged!
+        for state in self.all_states:
+            old_action = self.policy[state]  # ✅ No need to use max() or .get()
+            best_action = None
+            best_q_value = float('-inf')
+
+            # Evaluate all actions
+            for action in range(self.env.n_actions):
+                reward, new_state = self._simulate_action(state, action)
+                q_value = reward + self.gamma * self.value_function[new_state]
+
+                if q_value > best_q_value:
+                    best_q_value = q_value
+                    best_action = action
+
+            # Update policy: Make the best action deterministic (1 probability)
+            self.policy[state] = best_action
+
+
     
     def _simulate_action(self, state, action):
         """
