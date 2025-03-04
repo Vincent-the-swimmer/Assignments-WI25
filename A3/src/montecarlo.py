@@ -131,7 +131,6 @@ class MonteCarloControl:
             list: The generated episode, which is a list of (state, action, reward) tuples.
         """
         #Initialize variables 
-        print(self.Q)
         state = self.env.reset()
         state = self.env.get_state()
         counter = 0
@@ -168,15 +167,15 @@ class MonteCarloControl:
         state = tuple(self.env.get_state())
         counter = 0
         path = []
+        #print(self.Q)
 
         #Begin going through episode
         while counter < self.max_episode_size:
-            action = np.argmax(self.greedy_policy[state])
+            action = np.argmax(self.egreedy_policy[state])
             reward = self.env.take_action(int(action))
             path.append((state, action, reward))
             state = tuple(self.env.get_state())
             counter += 1
-            print((state, action, reward))
             if self.env.is_terminal_state():
                 break
         return path
@@ -200,7 +199,7 @@ class MonteCarloControl:
             if (state, action) not in self.C:
                 self.C[(state, action)] = W
             self.C[(state, action)] += W
-            self.Q[(state, action)] + self.Q[(state, action)] + W/(self.C[(state, action)])*(G - self.Q[(state, action)])
+            self.Q[(state, action)] = self.Q[(state, action)] + W/(self.C[(state, action)])*(G - self.Q[(state, action)])
             # self.greedy_policy[state] = np.argmax(self.Q[state])
 
             W *= max(self.greedy_policy[state])/max(self.egreedy_policy[state])
