@@ -193,16 +193,15 @@ class MonteCarloControl:
         W = 1.0
 
         #Follow Sutton and Barton's pseudocode
-        for t in range(len(episode) - 1, 0, -1):
+        for t in range(len(episode)-1, -1, -1):
             state, action, reward = episode[t]
             G = self.gamma*G + reward
             if (state, action) not in self.C:
-                self.C[(state, action)] = W
+                self.C[(state, action)] = 0.0
             self.C[(state, action)] += W
             self.Q[(state, action)] = self.Q[(state, action)] + W/(self.C[(state, action)])*(G - self.Q[(state, action)])
-            # self.greedy_policy[state] = np.argmax(self.Q[state])
-
-            W *= max(self.greedy_policy[state])/max(self.egreedy_policy[state])
+            self.greedy_policy[state] = np.argmax(self.Q[(state, action)])
+            W *= 1/self.epsilon
             if W == 0:
                 break
 
