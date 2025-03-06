@@ -47,7 +47,9 @@ class MonteCarloControl:
         self.Q = defaultdict(lambda: np.full(env.n_actions, 0))
         self.C = defaultdict(lambda: np.zeros(env.n_actions))
         self.greedy_policy = defaultdict(lambda: np.full(env.n_actions, 1 / env.n_actions))
+        self.create_target_greedy_policy
         self.egreedy_policy = defaultdict(lambda: np.full(env.n_actions, 1 / env.n_actions))
+        self.create_behavior_egreedy_policy
 
 
     def create_target_greedy_policy(self):
@@ -171,7 +173,7 @@ class MonteCarloControl:
 
         #Begin going through episode
         while counter < self.max_episode_size:
-            action = np.argmax(self.egreedy_policy[state])
+            action = np.argmax(self.greedy_policy[state])
             reward = self.env.take_action(int(action))
             path.append((state, action, reward))
             state = tuple(self.env.get_state())
@@ -196,10 +198,13 @@ class MonteCarloControl:
         for t in range(len(episode)-1, -1, -1):
             state, action, reward = episode[t]
             G = self.gamma*G + reward
-            if (state, action) not in self.C:
-                self.C[(state, action)] = 0.0
-            self.C[(state, action)] += W
-            self.Q[(state, action)] = self.Q[(state, action)] + W/(self.C[(state, action)])*(G - self.Q[(state, action)])
+            # if (state, action) not in self.C:
+            #     self.C[state][action] = 0.0
+            #print(action)
+            self.C[state][action] += W
+            # hi = self.Q[state][action] + W/(self.C[state])*(G - self.Q[state][action])
+            # print(self.C[state][action])
+            self.Q[state][action] = self.Q[state][action] + (W/(self.C[state][action]))*(G - self.Q[state][action])
             self.greedy_policy[state] = np.argmax(self.Q[(state, action)])
             W *= 1/self.epsilon
             if W == 0:
