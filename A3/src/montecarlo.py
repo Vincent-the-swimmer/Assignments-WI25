@@ -231,22 +231,32 @@ class MonteCarloControl:
         Returns: none
         """
         visited = []
-        returns = defaultdict(np.array)
+        returns = defaultdict(lambda: np.zeros(self.env.n_actions))
         for step in episode:
             state, action, reward = step
+            #print(state)
+            if not isinstance(state, tuple):
+                state = tuple(state.tolist())
             state_action_pair = (state, action)
+            #print(state_action_pair)
             if state_action_pair not in visited:
                 visited.append(state_action_pair)
                 G = reward
-                returns[state_action_pair].append(G)
-                self.Q[state] = sum(returns[state_action_pair])/len(returns[state_action_pair])
+                returns[state][action] = G
+                self.Q[state][action] = sum(returns[state])/len(returns[state])
         for step in episode:
-            a_star = np.argmax(self.Q[state, action])
-            for action in range(self.env.n_actions):
-                if a_star == action:
-                    self.egreedy_policy[state] = 1 - self.epsilon + self.epsilon/abs(self.env.n_actions)
-                else:
-                    self.egreedy_policy[state] = self.epsilon/abs(self.env.n_actions)
+            state, action, reward = step
+            if not isinstance(state, tuple):
+                state = tuple(state.tolist())
+            a_star = np.argmax(self.Q[state][action])
+            self.greedy_policy[state][action] = a_star
+            # for action in range(self.env.n_actions):
+            #     if a_star == action:
+            #         self.egreedy_policy[state] = 1 - self.epsilon + self.epsilon/abs(self.env.n_actions)
+            #     else:
+            #         self.egreedy_policy[state] = self.epsilon/abs(self.env.n_actions)
+        self.create_behavior_egreedy_policy()
+        self.create_target_greedy_policy()
 
 
 
