@@ -79,22 +79,31 @@ class MonteCarloControl:
         Args: none
         Returns: none, stores new policy in self.target_policy
         """
-        # for state in self.greedy_policy:
-        #     #Do epsilon greedy action selection
-        #     if np.random.rand() < self.epsilon:
-        #         best_action = np.random.randint(0, len(self.greedy_policy[state]))
-        #     else:
-        #         best_action = np.argmax(self.greedy_policy[state])
+        for state in self.greedy_policy:
+            #Do epsilon greedy action selection
+            if np.random.rand() < self.epsilon:
+                best_action = np.random.randint(0, self.env.n_actions)
+            else:
+                best_action = np.argmax(self.greedy_policy[state])
             
-        #     #Assigns the value to the egreedy policy
-        #     action_prob = np.zeros(len(self.greedy_policy[state]))
-        #     action_prob[best_action] = 1
-        #     self.egreedy_policy[state] = action_prob   
-        for state in self.Q:
-            best_action = np.argmax(self.greedy_policy[state])
-            action_prob = np.full(len(self.greedy_policy[state]), self.epsilon / len(self.greedy_policy[state]))
-            action_prob[best_action] += 1 - self.epsilon
-            self.egreedy_policy[state] = action_prob
+            #Assigns the value to the egreedy policy
+            action_prob = np.zeros(len(self.greedy_policy[state]))
+            action_prob[best_action] = 1
+            self.egreedy_policy[state] = action_prob   
+        # for state in self.Q:
+        #     best_action = np.argmax(self.greedy_policy[state])
+        #     action_prob = np.full(len(self.greedy_policy[state]), self.epsilon / len(self.greedy_policy[state]))
+        #     action_prob[best_action] += 1 - self.epsilon
+        #     self.egreedy_policy[state] = action_prob
+        # for state, action_probs in self.greedy_policy.items():
+        #     num_actions = len(action_probs)
+        #     greedy_action = max(action_probs, key=action_probs.get)  # Find the action with the highest probability
+            
+        #     # Initialize all actions with epsilon-distributed probability
+        #     self.egreedy_policy[state] = {action: self.epsilon / num_actions for action in action_probs}
+            
+        #     # Assign the greedy action the additional probability mass
+        #     self.egreedy_policy[state][greedy_action] += (1 - self.epsilon)
    
 
 
@@ -116,9 +125,7 @@ class MonteCarloControl:
             best_action = np.random.randint(0, len(self.egreedy_policy[state]))
         else:
             best_action = np.argmax(self.egreedy_policy[state])
-
-        return state, best_action
-        # return np.random.choice(len(self.egreedy_policy[state]), p=self.egreedy_policy[state])
+        return best_action
 
     def generate_egreedy_episode(self):
         """
@@ -139,7 +146,7 @@ class MonteCarloControl:
         path = []
         #Begin going through episode
         while counter < self.max_episode_size:
-            state, action = self.egreedy_selection(state)
+            action = self.egreedy_selection(state)
             reward = self.env.take_action(int(action))
             path.append((state, action, reward))
             state = self.env.get_state()
@@ -201,14 +208,18 @@ class MonteCarloControl:
             # if (state, action) not in self.C:
             #     self.C[state][action] = 0.0
             #print(action)
+            if not isinstance(state, tuple):
+                state = tuple(state.tolist())
             self.C[state][action] += W
-            # hi = self.Q[state][action] + W/(self.C[state])*(G - self.Q[state][action])
-            # print(self.C[state][action])
             self.Q[state][action] = self.Q[state][action] + (W/(self.C[state][action]))*(G - self.Q[state][action])
-            self.greedy_policy[state] = np.argmax(self.Q[(state, action)])
-            W *= 1/self.epsilon
+            self.greedy_policy[state][np.argmax(self.Q[(state, action)])] = 1
+            if self.greedy_policy[state][action] == 0:
+                break
+            W *= self.egreedy_policy[state][action]/self.greedy_policy[state][action]
             if W == 0:
                 break
+        self.create_behavior_egreedy_policy()
+        self.create_target_greedy_policy()
 
     
     def update_onpolicy(self, episode):
