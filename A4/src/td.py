@@ -16,6 +16,15 @@ def initialize_q_table(state_bins: dict, action_bins: list) -> np.ndarray:
         np.ndarray: A Q-table initialized to zeros with dimensions matching the state and action space.
     """
     # TODO: Implement this function
+    dim_state = []
+    for i in range(len(state_bins["position"])):
+        dim_state.append(len(state_bins["position"][i]))
+    for i in range(len(state_bins["velocity"])):
+        dim_state.append(len(state_bins["velocity"][i]))
+    dim_action = len(action_bins)
+    dim_all = tuple(dim_state) + (dim_action, )
+    
+    return np.zeros(dim_all)
     ...
     
 
@@ -45,7 +54,6 @@ def td_learning(env: Environment, num_episodes: int, alpha: float, gamma: float,
 
     for episode in tqdm(range(num_episodes), desc="Training Episodes"):
         # reset env
-        
         # run the episode
             # select action
             # take action
@@ -53,10 +61,39 @@ def td_learning(env: Environment, num_episodes: int, alpha: float, gamma: float,
             # update Q-table
             # if it is the last timestep, break
         # keep track of the reward
-        ...
+
+        action_taken, reward, discount, state = env.reset()
+        state = tuple(quantize_state(state, state_bins))
+        done = False
+        total_reward = 0
+        while not done:
+            action = egreedy_action_selection(q_table, state, action_bins, epsilon)
+
+            action_taken, reward, discount, next_state = env.step(action)
+
+            next_state = tuple(quantize_state(next_state, state_bins))
+            if reward == None:
+                break
+            next_action = egreedy_action_selection(q_table, next_state, action_bins, epsilon)
+            q_table[state][action] = q_table[state][action] + alpha*(reward + gamma*q_table[next_state][next_action]- q_table[state][action])
+            
+            state = next_state
+            total_reward += reward
+        rewards.append(total_reward)
+            
+    #print(q_table[1])
+    # action_taken, reward, discount, next_state = env.step(action)
+
 
     return q_table, rewards
 
+def egreedy_action_selection(q_table, state_index, action_bins, epsilon):
+    if np.random.rand() < epsilon:
+        best_action = np.random.randint(0, len(action_bins))
+    else:
+        check_array = q_table[state_index]
+        best_action = np.argmax(check_array)
+    return best_action
 
 def greedy_policy(q_table: np.ndarray) -> callable:
     """

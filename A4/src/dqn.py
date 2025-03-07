@@ -127,12 +127,15 @@ class ReplayMemory:
         """
         # create a deque to store the transitions
         # TODOs
+        self.capacity = capacity
+        self.memory = deque(maxlen=capacity)
 
     def push(self, *args):
         """Save a transition"""
         # append a transition to the memory
         # if the memory is full, remove the oldest transition
         # TODOs
+        self.memory.append((args))
 
     def sample(self, batch_size):
         """
@@ -146,6 +149,7 @@ class ReplayMemory:
         """
         # randomly sample a batch of transitions
         # TODOs
+        return random.sample(self.memory, batch_size)
 
     def __len__(self):
         return len(self.memory)
@@ -163,7 +167,11 @@ class DQN(nn.Module):
         # TODO: Implement the __init__ method
         # Initialize the DQN module using torch.nn
         # The network should have 3 fully connected layers with ReLU activations
-        ...
+        super(DQN, self).__init__()
+
+        self.fc1 = nn.Linear(n_observations, 128)  # First hidden layer
+        self.fc2 = nn.Linear(128, 128)  # Second hidden layer
+        self.fc3 = nn.Linear(128, n_actions)  # Output layer
 
     def forward(self, x):
         """
@@ -176,7 +184,10 @@ class DQN(nn.Module):
             torch.Tensor: Output tensor representing Q-values for each action.
         """
         # TODO: Implement the forward pass
-        ...
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
 
 
 
@@ -195,10 +206,10 @@ class DQNTrainer:
         """
         # TODO: Store necessary references
         self.env = env
-        self.policy_net = ... # Initialize the policy network 
-        self.target_net = ... # Initialize the target network
+        self.policy_net = DQN(self.env.obs_size, self.env.action_space_n).to(device) # Initialize the policy network 
+        self.target_net = DQN(self.env.obs_size, self.env.action_space_n).to(device) # Initialize the target network
         # TODO: initialize the target network with the same weights as the policy network
-        self.optimizer = ... # Initialize the optimizer
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=params.LR) # Initialize the optimizer
         self.memory = memory
         self.device = device
         self.params = params
@@ -216,23 +227,29 @@ class DQNTrainer:
         """
         # Compute epsilon threshold
         sample = random.random()
-        eps_threshold = ... # TODO: Implement epsilon decay based on the provided equation
+        eps_threshold = self.params.EPS_END + (self.params.EPS_START-self.params.EPS_END)*math.exp(-1*self.steps_done/self.params.EPS_DECAY) # TODO: Implement epsilon decay based on the provided equation
 
         # Update steps
         self.steps_done += 1
 
         # Exploit or explore
-        if ...: # TODO: fill in the condition 
+        if random.random() > eps_threshold: # TODO: fill in the condition 
             with torch.no_grad():
+                # print("first")
                 # Choose best action from Q-network
-                return self.policy_net(state_tensor).max(1).indices.view(1, 1) # provided
+                test = self.policy_net(state_tensor).max(1).indices.view(1, 1) # provided
+                # print(test)
+                return test
         else:
             # Choose random action
-            return torch.tensor(
+            # print("second")
+            test = torch.tensor(
                 [[random.randrange(self.env.action_space_n)]],
                 device=self.device,
                 dtype=torch.long,
             )
+            # print(test)
+            return test
 
     def optimize_model(self) -> None:
         """
@@ -256,7 +273,7 @@ class DQNTrainer:
         """
         # STEP 1: Check if there's enough data in replay memory; if not, simply return.
         # TODO: Check memory size (e.g., if len(self.memory) < self.params.BATCH_SIZE: return)
-
+        
         # STEP 2: Sample a minibatch of transitions from replay memory.
         # TODO: Sample a batch of transitions from self.memory
 
@@ -291,7 +308,50 @@ class DQNTrainer:
         # - Optionally clip the gradients.
         # - Perform a step with the optimizer.
         # TODO: Zero gradients, perform backpropagation (loss.backward()), optionally clip gradients, and then call self.optimizer.step()
-        pass
+        
+        # Step 1
+        if len(self.memory) < self.params.BATCH_SIZE:
+            return
+        
+        # Step 2
+        transitions = self.memory.sample(self.params.BATCH_SIZE)
+
+        # Step 3
+        #state, action, reward, next_state = transitions
+
+        batch = Transition(*zip(*transitions))
+
+        # Step 4
+        state_batch = torch.cat(batch.state).to(self.device)
+        action_batch = torch.cat(batch.action).to(self.device)
+        reward_batch = torch.tensor(batch.reward, dtype=torch.float32).to(self.device)
+
+        # Step 5
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool, device=self.device)
+        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None]).to(self.device)
+
+        # Step 6
+        state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+
+        # Step 7
+        next_state_values = torch.zeros(self.params.BATCH_SIZE, device=self.device)
+        with torch.no_grad():
+            next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0]
+
+        # Step 8
+        expected_state_action_values = (reward_batch + self.params.GAMMA * next_state_values).unsqueeze(1)
+
+        #Step 9
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        # for param in self.policy_net.parameters():
+        #     print(param.grad)
+
+        self.optimizer.step()
+
+
 
     def soft_update(self) -> None:
         """
@@ -319,7 +379,9 @@ class DQNTrainer:
         
         # TODO: Load the updated state dictionary into target_net
         
-        pass
+        tau = self.params.TAU  
+        for target_param, policy_param in zip(self.target_net.parameters(), self.policy_net.parameters()):
+            target_param.data.copy_(tau * policy_param.data + (1.0 - tau) * target_param.data)
 
     def plot_rewards(self, show_result: bool = False) -> None:
         """
@@ -382,7 +444,32 @@ class DQNTrainer:
                 # TODO: Perform soft update (self.soft_update()).
                 # TODO: Accumulate the reward for the episode.
                 # TODO: Break the loop when a terminal or truncated state is reached.
-                break  # Remove this break after implementing the training loop
+
+                #Select action
+                action = self.select_action(state)
+
+                #Execute action
+                next_obs, reward, done, truncated, info = self.env.step(action.item())  # action.item() to convert tensor to int
+
+                #Convert to tensor
+                next_state = None if done or truncated else torch.tensor(next_obs, dtype=torch.float32, device=self.device).unsqueeze(0)
+
+                #Save to memory
+                self.memory.push(state, action, next_state, reward)
+
+                #Optimize
+                self.optimize_model()
+
+                #Soft update
+                self.soft_update()
+
+                #Add up reward
+                episode_reward += reward
+
+                #Terminal check
+                if done or truncated:
+                    break
+                state = next_state
 
             # Tracking episode reward and plotting rewards.
             self.episode_rewards.append(episode_reward)
