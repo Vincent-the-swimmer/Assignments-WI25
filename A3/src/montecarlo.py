@@ -180,7 +180,7 @@ class MonteCarloControl:
         self.create_target_greedy_policy()
         #Begin going through episode
         while counter < self.max_episode_size:
-            action = np.argmax(self.Q[state])
+            action = np.argmax(self.greedy_policy[state])
             reward = self.env.take_action(int(action))
             path.append((state, action, reward))
             state = tuple(self.env.get_state())
@@ -214,12 +214,12 @@ class MonteCarloControl:
             self.Q[state][action] = self.Q[state][action] + (W/(self.C[state][action]))*(G - self.Q[state][action])
             # self.greedy_policy[state][np.argmax(self.Q[(state, action)])] = 1
             if self.greedy_policy[state][action] == 0:
-                break
+                continue
             W *= self.egreedy_policy[state][action]/self.greedy_policy[state][action]
             if W == 0:
                 break
-        self.create_behavior_egreedy_policy()
         self.create_target_greedy_policy()
+        self.create_behavior_egreedy_policy()
 
     
     def update_onpolicy(self, episode):
